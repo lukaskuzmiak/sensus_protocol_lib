@@ -1,15 +1,8 @@
 #include "SensusProtocol.h"
-#include <String>
-
-#ifdef DEBUG_ESP_PORT
-#define DEBUG_MSG(...) DEBUG_ESP_PORT.printf( __VA_ARGS__ )
-#else
-#define DEBUG_MSG(...)
-#endif
 
 void SensusProtocol::powerUp() {
   digitalWrite(clock_pin, clock_ON); // power on meter
-  delay(3000);
+  delay(500);
 }
 
 void SensusProtocol::powerDown() {
@@ -22,25 +15,32 @@ int SensusProtocol::readBit() {
   digitalWrite(clock_pin, clock_ON);
   delay(1); // Seems to work even without it, but just for sure
   int val = digitalRead(read_pin); // LOW is 1 and HIGH is 0
-  DEBUG_MSG("bit: %i\n", val);
+  // ESP_LOGE("SensusProtocol", "bit: %i\n", val);
   return val;
 }
 
 char SensusProtocol::readByte() {
-  int bits[10];
-  for (int i = 0; i < 10; ++i) {
-    bits[i] = readBit();
-  }
   char result = 0;
-  int startIdx = 1;
-  int numOfBits = 7;
-  for (int b = 0; b < 7; ++b) {
-    int i = b + startIdx;
-    if (bits[i]) {
-      result |= (1 << b);
+  bool parity = false;
+  if (readBit() != 0) {
+    ESP_LOGE("SensusProtocol", "Start bit is not 0, error");
+    return -1;
+  }
+  for (int i = 0; i < 7; ++i) {
+    if (readBit()) {
+      result |= (1 << i);
+      parity = !parity;
     }
   }
-  DEBUG_MSG("byte: %i, %c\n", result, result);
+  if (readBit() != parity) {
+    ESP_LOGE("SensusProtocol", "Parity error");
+    return -1;
+  }
+  if (readBit() != 1) {
+    ESP_LOGE("SensusProtocol", "Stop bit is not 1, error");
+    return -1;
+  }
+  ESP_LOGE("SensusProtocol", "byte: %i, %c\n", result, result);
   return result;    
 }
   
@@ -48,7 +48,7 @@ SensusProtocol::SensusProtocol(int clock_pin, int read_pin, bool read_pin_pullup
  : clock_pin(clock_pin), read_pin(read_pin), read_pin_pullup(read_pin_pullup) {}
 
 void SensusProtocol::setup(int reset_wait) {
-  DEBUG_MSG("setup using pins: clk: %i, read: %i, read_pullup: %i ...\n", clock_pin, read_pin, read_pin_pullup);
+  ESP_LOGE("SensusProtocol", "setup using pins: clk: %i, read: %i, read_pullup: %i ...\n", clock_pin, read_pin, read_pin_pullup);
   pinMode(clock_pin, OUTPUT);
   digitalWrite(clock_pin, clock_OFF); // power off the meter
   auto input = INPUT;
@@ -61,14 +61,16 @@ void SensusProtocol::setup(int reset_wait) {
 
 int SensusProtocol::getClockPin() const { return clock_pin; }
 
-String SensusProtocol::readData(int max_bytes) {
-  String result;
+char* SensusProtocol::readData(int max_bytes) {
+  char* result = new char[max_bytes];
   powerUp();
   for (int i = 0; i < max_bytes; ++i) {
     char c = readByte();
-    if (c == '\r')
+    if (c == '\r') {
+      result[i] = '\0';
       break;
-    result += c;
+    }
+    result[i] = c;
   }
   powerDown();
   return result;

@@ -1,5 +1,30 @@
 # sensus_protocol_lib
 
+## DEV branch
+
+ - swapped `clock_ON` and `clock_OFF` as the badger meter I used was wired using a MOSFET (basic 2N7000)
+ - got rid of Arduno String (changed to `char*`)
+ - using `ESP_LOGE` (for development for ESPHome), did not quickly find a way to switch log level for libraries (trivial for custom components but not underlaying libraries)
+ - reimplemented `SensusProtocol::readByte()` in a (hacky) fashion of https://github.com/rszimm/kmeter, checking the parity as well as start/stop bits
+ - TODO: state machine for reading, similar to kmeter
+ - 500ms after reboot is sufficient for Badger ADE Model 70 (dev one I used)
+
+Badger Model 70 ADE wiring:
+ - Red (DATA) to Pin 13 on NodeMCU ESP32
+ - White (VCC) to 5V on NodeMCU ESP32
+ - 2N7000
+    - Gate - Pin 12 on NodeMCU ESP32
+    - Drain - Black (GND) on the badger
+    - Source - to GND
+
+White and Black on the Badger can be swapped, Red has to be DATA it seems.
+
+```
+SensusProtocol(12, 13, true); // this works for wiring above
+```
+
+## README contents
+
 This is arduino library for reading Sensus Protocol (UI-1203). It was developed on ESP8266 (ESP-01), but should also work with Arduino, if the meter is connected the same way.
 
 Developed to read Sensus SR D II (SR D 2) water meter, but could be usable for others. Depedning on meter, the string returned may be different, but the protocol to read the meter should be the same.

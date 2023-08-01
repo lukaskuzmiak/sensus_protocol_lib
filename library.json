@@ -1,0 +1,31 @@
+{
+  "name": "sensus_protocol_lib",
+  "version": "0.0.3",
+  "description": "Library to read Sensus Protocol (UI-1203) from meters",
+  "keywords": "sensus, UI-1203",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/lukaskuzmiak/sensus_protocol_lib.git"
+  },
+  "authors":
+  [
+    {
+      "name": "Vladimir Michl",
+      "email": "vladimir.michl.vt@gmail.com",
+      "url": "https://github.com/michlv"
+    },
+    {
+      "name": "Lukas Kuzmiak",
+      "email": "lukash@backstep.net",
+      "url": "https://github.com/lukaskuzmiak",
+      "maintainer": true
+    }
+  ],
+  "license": "LGPL-2.1-or-later",
+  "homepage": "https://github.com/lukaskuzmiak/sensus_protocol_lib",
+  "dependencies": {
+  },
+  "frameworks": "*",
+  "platforms": "*"
+}
